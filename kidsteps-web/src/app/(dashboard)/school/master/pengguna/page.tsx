@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Plus, Mail, CheckCircle2, Clock, MoreVertical, Edit2, Trash2, ShieldCheck, MailWarning, UserPlus, RefreshCcw } from "lucide-react";
+import { Search, Plus, Mail, CheckCircle2, Clock, MoreVertical, Edit2, Trash2, ShieldCheck, MailWarning, UserPlus, RefreshCcw, Link as LinkIcon, Save } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Google Icon SVG
 const GoogleIcon = () => (
@@ -22,29 +24,83 @@ type AppUser = {
   name: string;
   email: string;
   role: 'Orang Tua' | 'Guru';
-  relatedEntity: string;
+  entities: string[];
   loginMethod: 'Google SSO' | 'Email' | 'Belum Terdaftar';
   status: 'Aktif' | 'Menunggu Registrasi';
 };
 
-const mockUsers: AppUser[] = [
-  { id: "1", name: "Anisa Rahma", email: "anisa.guru@kidsteps.id", role: "Guru", relatedEntity: "Wali Kelas A (Bintang)", loginMethod: "Google SSO", status: "Aktif" },
-  { id: "2", name: "Rian Hidayat", email: "rian.h@kidsteps.id", role: "Guru", relatedEntity: "Wali Kelas B (Bulan)", loginMethod: "Email", status: "Aktif" },
-  { id: "3", name: "Sari Indah", email: "sari.indah@kidsteps.id", role: "Guru", relatedEntity: "Wali Kelas C (Matahari)", loginMethod: "Google SSO", status: "Aktif" },
-  { id: "4", name: "Bapak Agus Santoso", email: "agus.s@gmail.com", role: "Orang Tua", relatedEntity: "Orang Tua Budi Santoso", loginMethod: "Google SSO", status: "Aktif" },
-  { id: "5", name: "Ibu Rini Aminah", email: "rini.aminah@yahoo.com", role: "Orang Tua", relatedEntity: "Orang Tua Siti Aminah", loginMethod: "Email", status: "Aktif" },
-  { id: "6", name: "Bapak Doni", email: "doni.kusuma@gmail.com", role: "Orang Tua", relatedEntity: "Orang Tua Dika Kusuma", loginMethod: "Belum Terdaftar", status: "Menunggu Registrasi" },
+const mockStudents = [
+  { id: "s1", name: "Budi Santoso", kelas: "Kelas A (Bintang)" },
+  { id: "s2", name: "Siti Aminah", kelas: "Kelas B (Bulan)" },
+  { id: "s3", name: "Dika Kusuma", kelas: "Kelas C (Matahari)" },
+  { id: "s4", name: "Rina Kusuma", kelas: "Kelas A (Bintang)" },
+  { id: "s5", name: "Arif Hidayat", kelas: "Kelas B (Bulan)" },
+];
+
+const initialUsers: AppUser[] = [
+  { id: "1", name: "Anisa Rahma", email: "anisa.guru@kidsteps.id", role: "Guru", entities: ["Wali Kelas A (Bintang)"], loginMethod: "Google SSO", status: "Aktif" },
+  { id: "2", name: "Rian Hidayat", email: "rian.h@kidsteps.id", role: "Guru", entities: ["Wali Kelas B (Bulan)"], loginMethod: "Email", status: "Aktif" },
+  { id: "3", name: "Sari Indah", email: "sari.indah@kidsteps.id", role: "Guru", entities: ["Wali Kelas C (Matahari)"], loginMethod: "Google SSO", status: "Aktif" },
+  { id: "4", name: "Bapak Agus Santoso", email: "agus.s@gmail.com", role: "Orang Tua", entities: ["Budi Santoso"], loginMethod: "Google SSO", status: "Aktif" },
+  { id: "5", name: "Ibu Rini Aminah", email: "rini.aminah@yahoo.com", role: "Orang Tua", entities: ["Siti Aminah"], loginMethod: "Email", status: "Aktif" },
+  { id: "6", name: "Bapak Doni", email: "doni.kusuma@gmail.com", role: "Orang Tua", entities: ["Dika Kusuma", "Rina Kusuma"], loginMethod: "Belum Terdaftar", status: "Menunggu Registrasi" },
 ];
 
 export default function PenggunaAplikasiPage() {
+  const [users, setUsers] = useState<AppUser[]>(initialUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState<'Semua' | 'Orang Tua' | 'Guru'>('Semua');
 
-  const filteredUsers = mockUsers.filter(user => {
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [newUserData, setNewUserData] = useState({ name: "", email: "", role: "Orang Tua" as "Orang Tua" | "Guru" });
+  const [linkingUser, setLinkingUser] = useState<AppUser | null>(null);
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+
+  const filteredUsers = users.filter(user => {
     const matchSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) || user.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchRole = filterRole === 'Semua' || user.role === filterRole;
     return matchSearch && matchRole;
   });
+
+  const handleOpenLinkDialog = (user: AppUser) => {
+    setLinkingUser(user);
+    setSelectedStudents(user.entities);
+  };
+
+  const handleToggleStudent = (studentName: string) => {
+    setSelectedStudents(prev => 
+      prev.includes(studentName) 
+        ? prev.filter(s => s !== studentName)
+        : [...prev, studentName]
+    );
+  };
+
+  const handleSaveLinks = () => {
+    if (!linkingUser) return;
+    setUsers(prev => prev.map(u => 
+      u.id === linkingUser.id ? { ...u, entities: selectedStudents } : u
+    ));
+    setLinkingUser(null);
+  };
+
+  const handleInviteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserData.name || !newUserData.email) return;
+
+    const newUser: AppUser = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: newUserData.name,
+      email: newUserData.email,
+      role: newUserData.role,
+      entities: [],
+      loginMethod: "Belum Terdaftar",
+      status: "Menunggu Registrasi"
+    };
+
+    setUsers(prev => [newUser, ...prev]);
+    setIsInviteDialogOpen(false);
+    setNewUserData({ name: "", email: "", role: "Orang Tua" });
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -54,7 +110,10 @@ export default function PenggunaAplikasiPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Pengguna Aplikasi</h1>
           <p className="text-[13px] text-muted-foreground mt-0.5">Kelola akses *client apps* untuk Guru dan Orang Tua Murid</p>
         </div>
-        <Button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-9 text-[13px] px-4 shadow-sm">
+        <Button 
+          onClick={() => setIsInviteDialogOpen(true)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-9 text-[13px] px-4 shadow-sm"
+        >
           <UserPlus className="w-4 h-4 mr-2" />
           Undang Pengguna
         </Button>
@@ -116,7 +175,13 @@ export default function PenggunaAplikasiPage() {
                     <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-1 ${user.role === 'Guru' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'}`}>
                       {user.role}
                     </span>
-                    <p className="text-muted-foreground">{user.relatedEntity}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {user.entities.map((entity, i) => (
+                        <span key={i} className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 dark:bg-white/10 dark:text-zinc-300">
+                          {user.role === 'Orang Tua' ? '🧒 ' : ''}{entity}
+                        </span>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-5 py-3">
                     {user.loginMethod === 'Google SSO' ? (
@@ -152,16 +217,20 @@ export default function PenggunaAplikasiPage() {
                   </td>
                   <td className="px-5 py-3 text-right">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
+                      <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors outline-none">
+                        <MoreVertical className="w-4 h-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 text-[12px] rounded-xl">
                         {user.status === 'Menunggu Registrasi' && (
                           <DropdownMenuItem className="gap-2 cursor-pointer">
                             <RefreshCcw className="w-3.5 h-3.5 text-blue-500" />
                             <span>Kirim Ulang Undangan</span>
+                          </DropdownMenuItem>
+                        )}
+                        {user.role === 'Orang Tua' && (
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => handleOpenLinkDialog(user)}>
+                            <LinkIcon className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Hubungkan Murid</span>
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem className="gap-2 cursor-pointer">
@@ -191,6 +260,128 @@ export default function PenggunaAplikasiPage() {
           </table>
         </div>
       </Card>
+
+      {/* ===== POPUP: Hubungkan Murid ===== */}
+      <Dialog open={!!linkingUser} onOpenChange={(open) => !open && setLinkingUser(null)}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4">
+              <LinkIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <DialogTitle>Hubungkan Murid ke Pengguna</DialogTitle>
+            <DialogDescription>
+              Pilih murid yang ingin dihubungkan dengan akun <strong>{linkingUser?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-zinc-50 dark:bg-white/[0.02] border border-zinc-100 dark:border-white/5 rounded-xl p-2 my-2 max-h-[300px] overflow-y-auto">
+            {mockStudents.map((student) => {
+              const isChecked = selectedStudents.includes(student.name);
+              
+              const otherParentsCount = users.filter(u => 
+                u.role === 'Orang Tua' && u.id !== linkingUser?.id && u.entities.includes(student.name)
+              ).length;
+              
+              const isMaxReached = otherParentsCount >= 2;
+              
+              if (isMaxReached && !isChecked) {
+                return null;
+              }
+
+              return (
+                <div key={student.id} className="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+                  <Checkbox 
+                    id={`student-${student.id}`} 
+                    checked={isChecked} 
+                    onCheckedChange={() => handleToggleStudent(student.name)} 
+                  />
+                  <label htmlFor={`student-${student.id}`} className="grid gap-0.5 flex-1 cursor-pointer">
+                    <span className="text-[13px] font-medium leading-none flex items-center gap-2">
+                      {student.name}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">{student.kelas}</span>
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setLinkingUser(null)}>Batal</Button>
+            <Button onClick={handleSaveLinks} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Save className="w-4 h-4 mr-2" />
+              Simpan Perubahan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== POPUP: Undang Pengguna Baru ===== */}
+      <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4">
+              <UserPlus className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <DialogTitle>Undang Pengguna Baru</DialogTitle>
+            <DialogDescription>
+              Kirim undangan akses aplikasi ke email guru atau orang tua murid.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleInviteSubmit} className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">Nama Lengkap</label>
+              <Input 
+                placeholder="Masukkan nama lengkap..." 
+                value={newUserData.name}
+                onChange={(e) => setNewUserData(prev => ({ ...prev, name: e.target.value }))}
+                className="rounded-xl bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">Alamat Email</label>
+              <Input 
+                type="email"
+                placeholder="nama@email.com" 
+                value={newUserData.email}
+                onChange={(e) => setNewUserData(prev => ({ ...prev, email: e.target.value }))}
+                className="rounded-xl bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">Peran Pengguna</label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={newUserData.role === 'Guru' ? 'default' : 'outline'}
+                  onClick={() => setNewUserData(prev => ({ ...prev, role: 'Guru' }))}
+                  className={`rounded-xl h-10 ${newUserData.role === 'Guru' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                >
+                  Guru
+                </Button>
+                <Button
+                  type="button"
+                  variant={newUserData.role === 'Orang Tua' ? 'default' : 'outline'}
+                  onClick={() => setNewUserData(prev => ({ ...prev, role: 'Orang Tua' }))}
+                  className={`rounded-xl h-10 ${newUserData.role === 'Orang Tua' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+                >
+                  Orang Tua
+                </Button>
+              </div>
+            </div>
+
+            <DialogFooter className="pt-4 gap-2 sm:gap-0">
+              <Button type="button" variant="outline" onClick={() => setIsInviteDialogOpen(false)}>Batal</Button>
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
+                Kirim Undangan
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

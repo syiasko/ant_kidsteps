@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, UserCheck, CalendarClock, MessageCircle, Eye, StickyNote, Bell, Send, CheckCircle2 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -110,9 +110,13 @@ export default function SchoolDashboardPage() {
     }, 1000);
   };
 
-  // Get current day
+  // Get current day (use state to avoid hydration mismatch)
   const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-  const todayStr = dayNames[new Date().getDay()];
+  const [todayStr, setTodayStr] = useState<string>("");
+
+  useEffect(() => {
+    setTodayStr(dayNames[new Date().getDay()]);
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

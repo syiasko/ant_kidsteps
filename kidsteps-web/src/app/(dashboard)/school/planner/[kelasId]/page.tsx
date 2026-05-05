@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -175,7 +175,11 @@ export default function WeeklyPlannerDetailPage({ params }: { params: Promise<{ 
 
   // Get current day
   const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-  const todayStr = dayNames[new Date().getDay()];
+  const [todayStr, setTodayStr] = useState<string>("");
+
+  useEffect(() => {
+    setTodayStr(dayNames[new Date().getDay()]);
+  }, []);
 
   const [currentWeek, setCurrentWeek] = useState<WeekPlan>({ ...initialCurrentWeek, kelas: kelas.name });
   const [futureWeeks, setFutureWeeks] = useState<WeekPlan[]>([]);
