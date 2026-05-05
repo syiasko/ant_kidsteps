@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, UserCheck, CalendarClock, MessageCircle, Eye, StickyNote } from "lucide-react"
+import { Users, UserCheck, CalendarClock, MessageCircle, Eye, StickyNote, Bell, Send, CheckCircle2 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
@@ -92,6 +92,23 @@ const kelasList: KelasInfo[] = [
 
 export default function SchoolDashboardPage() {
   const [viewingClass, setViewingClass] = useState<KelasInfo | null>(null);
+
+  // Blast Notif State
+  const [blastingPlan, setBlastingPlan] = useState<DailyPlan | null>(null);
+  const [isSendingBlast, setIsSendingBlast] = useState(false);
+  const [blastedDays, setBlastedDays] = useState<Record<string, boolean>>({});
+
+  const handleSendBlast = () => {
+    setIsSendingBlast(true);
+    // Simulate API Call
+    setTimeout(() => {
+      setIsSendingBlast(false);
+      if (blastingPlan) {
+        setBlastedDays(prev => ({ ...prev, [blastingPlan.day]: true }));
+      }
+      setBlastingPlan(null);
+    }, 1000);
+  };
 
   // Get current day
   const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -260,18 +277,37 @@ export default function SchoolDashboardPage() {
               <div className="space-y-2 py-2">
                 {viewingClass.plans.map((plan, i) => {
                   const isToday = plan.day === todayStr;
+                  const todayPlanIndex = viewingClass.plans.findIndex(p => p.day === todayStr);
+                  const isBackdate = todayPlanIndex !== -1 && i < todayPlanIndex;
                   return (
                     <div key={i} className={`p-3 rounded-xl transition-colors ${isToday ? 'bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-emerald-200 dark:ring-emerald-500/30 shadow-sm' : 'bg-[#f5f5f7] dark:bg-white/[0.03]'}`}>
                       <div className="flex items-start gap-3">
                         <div className={`w-14 text-center font-semibold text-[12px] py-1.5 rounded-lg shrink-0 mt-0.5 ${isToday ? 'bg-emerald-500 text-white shadow-sm' : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400'}`}>{plan.day}</div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className={`text-[13px] font-medium ${isToday ? 'text-emerald-900 dark:text-emerald-100' : ''}`}>{plan.activity}</p>
-                            {isToday && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/30 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase tracking-wider">Hari Ini</span>}
+                          <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className={`text-[13px] font-medium ${isToday ? 'text-emerald-900 dark:text-emerald-100' : ''}`}>{plan.activity}</p>
+                                {isToday && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/30 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase tracking-wider">Hari Ini</span>}
+                              </div>
+                              <p className="text-[11px] text-muted-foreground mt-0.5">🍽 Kudapan: {plan.snack}</p>
+                            </div>
+                            {!isBackdate && (
+                              blastedDays[plan.day] ? (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-lg text-[11px] font-medium shrink-0">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Terkirim
+                                </div>
+                              ) : (
+                                <Button variant="outline" size="sm" onClick={() => setBlastingPlan(plan)} className="shrink-0 h-8 text-[11px] font-medium hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 dark:border-white/10 transition-colors shadow-sm">
+                                  <Bell className="w-3.5 h-3.5 mr-1.5" />
+                                  Blast Notif
+                                </Button>
+                              )
+                            )}
                           </div>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">🍽 Kudapan: {plan.snack}</p>
                           {plan.notes.length > 0 && (
-                            <div className="mt-1.5 space-y-0.5">
+                            <div className="mt-2 space-y-0.5">
                               {plan.notes.map((n, ni) => (
                                 <p key={ni} className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-500/[0.06] px-2 py-1 rounded-md border border-amber-100 dark:border-amber-500/10 flex items-start gap-1"><span className="text-amber-400">•</span>{n}</p>
                               ))}
@@ -304,6 +340,51 @@ export default function SchoolDashboardPage() {
         </DialogContent>
       </Dialog>
 
+      {/* ===== POPUP: Blast Notification Confirmation ===== */}
+      <Dialog open={!!blastingPlan} onOpenChange={(open) => !open && setBlastingPlan(null)}>
+        <DialogContent className="sm:max-w-[450px]">
+          {blastingPlan && viewingClass && (
+            <>
+              <DialogHeader>
+                <div className="w-12 h-12 bg-blue-50 dark:bg-blue-500/10 rounded-xl flex items-center justify-center mb-4">
+                  <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <DialogTitle>Kirim Notifikasi Jadwal</DialogTitle>
+                <DialogDescription>
+                  Notifikasi akan dikirimkan ke seluruh orang tua murid {viewingClass.name} melalui aplikasi dan WhatsApp.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="bg-zinc-50 dark:bg-white/[0.02] border border-zinc-100 dark:border-white/5 rounded-xl p-4 my-2 text-[13px]">
+                <p className="font-semibold mb-2">Pratinjau Pesan:</p>
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  Halo Ayah/Bunda! 👋{'\n\n'}
+                  Mengingatkan jadwal kegiatan ananda besok hari *{blastingPlan.day}*:{'\n'}
+                  🎯 *{blastingPlan.activity}*{'\n'}
+                  🍽️ Kudapan: {blastingPlan.snack}{'\n\n'}
+                  {blastingPlan.notes.length > 0 ? `Catatan Khusus Harian:\n${blastingPlan.notes.map(n => `- ${n}`).join('\n')}\n\n` : ''}
+                  {viewingClass.weeklyNotes.length > 0 ? `Catatan Mingguan:\n${viewingClass.weeklyNotes.map(n => `- ${n}`).join('\n')}\n\n` : ''}
+                  Terima kasih dan sampai jumpa! 🏫
+                </p>
+              </div>
+
+              <DialogFooter className="mt-4 gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setBlastingPlan(null)} disabled={isSendingBlast}>Batal</Button>
+                <Button onClick={handleSendBlast} disabled={isSendingBlast} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  {isSendingBlast ? (
+                    <>Mengirim...</>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Kirim Sekarang
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

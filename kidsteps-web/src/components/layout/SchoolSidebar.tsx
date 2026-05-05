@@ -16,6 +16,7 @@ const menuItems = [
       { title: "Siswa", url: "/school/master/siswa" },
       { title: "Kelas", url: "/school/master/kelas" },
       { title: "Guru", url: "/school/master/guru" },
+      { title: "Pengguna Aplikasi", url: "/school/master/pengguna" },
     ]
   },
   {
