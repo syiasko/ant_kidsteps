@@ -173,6 +173,10 @@ export default function WeeklyPlannerDetailPage({ params }: { params: Promise<{ 
   const { kelasId } = use(params);
   const kelas = kelasMap[kelasId] || { name: "Kelas", teacher: "-", students: 0 };
 
+  // Get current day
+  const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const todayStr = dayNames[new Date().getDay()];
+
   const [currentWeek, setCurrentWeek] = useState<WeekPlan>({ ...initialCurrentWeek, kelas: kelas.name });
   const [futureWeeks, setFutureWeeks] = useState<WeekPlan[]>([]);
   const [viewingWeek, setViewingWeek] = useState<WeekPlan | null>(null);
@@ -290,14 +294,18 @@ export default function WeeklyPlannerDetailPage({ params }: { params: Promise<{ 
 
       {/* Read-Only Jadwal Minggu Ini */}
       <div className="grid gap-3">
-        {currentWeek.plans.map((plan) => (
-          <Card key={plan.day} className="border-0 bg-white dark:bg-white/[0.04] shadow-[0_1px_3px_rgba(0,0,0,0.06)] rounded-2xl overflow-hidden">
-            <div className="flex flex-col sm:flex-row">
-              <div className="bg-emerald-50/80 dark:bg-emerald-500/[0.06] p-4 flex flex-col justify-center items-center border-b sm:border-b-0 sm:border-r border-black/[0.04] dark:border-white/[0.06] sm:w-28 shrink-0">
-                <CalendarDays className="h-4 w-4 text-emerald-500 mb-1" />
-                <h3 className="font-semibold text-[14px] text-emerald-700 dark:text-emerald-400">{plan.day}</h3>
-              </div>
-              <div className="p-4 flex-1">
+        {currentWeek.plans.map((plan) => {
+          const isToday = plan.day === todayStr;
+          return (
+            <Card key={plan.day} className={`border-0 shadow-[0_1px_3px_rgba(0,0,0,0.06)] rounded-2xl overflow-hidden transition-all ${isToday ? 'bg-white dark:bg-white/[0.04] ring-2 ring-emerald-400 dark:ring-emerald-500/50' : 'bg-white dark:bg-white/[0.04]'}`}>
+              <div className="flex flex-col sm:flex-row">
+                <div className={`${isToday ? 'bg-emerald-500 text-white dark:bg-emerald-600' : 'bg-emerald-50/80 dark:bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-400'} p-4 flex flex-col justify-center items-center border-b sm:border-b-0 sm:border-r border-black/[0.04] dark:border-white/[0.06] sm:w-28 shrink-0 relative overflow-hidden`}>
+                  {isToday && <div className="absolute top-0 right-0 w-8 h-8 bg-white/20 dark:bg-white/10 rounded-bl-3xl -mr-2 -mt-2"></div>}
+                  <CalendarDays className={`h-4 w-4 mb-1 ${isToday ? 'text-emerald-100' : 'text-emerald-500'}`} />
+                  <h3 className="font-semibold text-[14px]">{plan.day}</h3>
+                  {isToday && <span className="text-[10px] font-bold bg-white text-emerald-700 dark:bg-black/20 dark:text-white px-1.5 py-0.5 rounded uppercase tracking-wider mt-1.5">Hari Ini</span>}
+                </div>
+                <div className="p-4 flex-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1"><BookOpen className="w-3 h-3" /> Kegiatan Seru</p>
@@ -319,7 +327,8 @@ export default function WeeklyPlannerDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
           </Card>
-        ))}
+        );
+      })}
       </div>
 
       {/* Notes Mingguan (Read-Only) */}
@@ -596,24 +605,30 @@ export default function WeeklyPlannerDetailPage({ params }: { params: Promise<{ 
                 <DialogDescription>{viewingWeek.dateRange} • {viewingWeek.kelas} • Tema: {viewingWeek.tema}</DialogDescription>
               </DialogHeader>
               <div className="space-y-2 py-2">
-                {viewingWeek.plans.map((plan, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-[#f5f5f7] dark:bg-white/[0.03]">
-                    <div className="flex items-start gap-3">
-                      <div className="w-14 text-center font-semibold text-[12px] text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 py-1.5 rounded-lg shrink-0 mt-0.5">{plan.day}</div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium">{plan.activity}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">🍽 Kudapan: {plan.snack}</p>
-                        {plan.notes.length > 0 && (
-                          <div className="mt-1.5 space-y-0.5">
-                            {plan.notes.map((n, ni) => (
-                              <p key={ni} className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-500/[0.06] px-2 py-1 rounded-md border border-amber-100 dark:border-amber-500/10 flex items-start gap-1"><span className="text-amber-400">•</span>{n}</p>
-                            ))}
+                {viewingWeek.plans.map((plan, i) => {
+                  const isToday = plan.day === todayStr;
+                  return (
+                    <div key={i} className={`p-3 rounded-xl transition-colors ${isToday ? 'bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-emerald-200 dark:ring-emerald-500/30 shadow-sm' : 'bg-[#f5f5f7] dark:bg-white/[0.03]'}`}>
+                      <div className="flex items-start gap-3">
+                        <div className={`w-14 text-center font-semibold text-[12px] py-1.5 rounded-lg shrink-0 mt-0.5 ${isToday ? 'bg-emerald-500 text-white shadow-sm' : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400'}`}>{plan.day}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className={`text-[13px] font-medium ${isToday ? 'text-emerald-900 dark:text-emerald-100' : ''}`}>{plan.activity}</p>
+                            {isToday && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/30 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase tracking-wider">Hari Ini</span>}
                           </div>
-                        )}
+                          <p className="text-[11px] text-muted-foreground mt-0.5">🍽 Kudapan: {plan.snack}</p>
+                          {plan.notes.length > 0 && (
+                            <div className="mt-1.5 space-y-0.5">
+                              {plan.notes.map((n, ni) => (
+                                <p key={ni} className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-500/[0.06] px-2 py-1 rounded-md border border-amber-100 dark:border-amber-500/10 flex items-start gap-1"><span className="text-amber-400">•</span>{n}</p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               {viewingWeek.weeklyNotes.length > 0 && (
                 <div className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-500/[0.04] border border-blue-100 dark:border-blue-500/10">

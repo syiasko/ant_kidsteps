@@ -1,7 +1,102 @@
+"use client";
+
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, UserCheck, CalendarClock, MessageCircle } from "lucide-react"
+import { Users, UserCheck, CalendarClock, MessageCircle, Eye, StickyNote } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+
+type DailyPlan = {
+  day: string;
+  activity: string;
+  snack: string;
+  notes: string[];
+};
+
+type KelasInfo = {
+  id: string;
+  name: string;
+  teacher: string;
+  students: number;
+  currentTema: string;
+  currentWeek: string;
+  dateRange: string;
+  color: string;
+  emoji: string;
+  plans: DailyPlan[];
+  weeklyNotes: string[];
+};
+
+const kelasList: KelasInfo[] = [
+  {
+    id: "1",
+    name: "Kelas A (Bintang)",
+    teacher: "Ibu Anisa",
+    students: 12,
+    currentTema: "Nusantara (Sumatra)",
+    currentWeek: "Minggu ke-22",
+    dateRange: "4 – 8 Mei 2026",
+    color: "emerald",
+    emoji: "⭐",
+    plans: [
+      { day: "Senin", activity: "Memasak: \"Roti Abon Gulung\"", snack: "Buah Pir", notes: ["Membawa sikat gigi, pasta gigi, gelas plastik anak yang sudah diberi nama.", "Membawa pakaian ganti."] },
+      { day: "Selasa", activity: "Indahnya Rumah Gadang", snack: "Buras Sayur", notes: [] },
+      { day: "Rabu", activity: "Pemeriksaan Gigi oleh Kids Dental", snack: "Memasak Roti Abon", notes: ["Pemeriksaan gigi gratis, pastikan anak sudah sarapan sebelum berangkat."] },
+      { day: "Kamis", activity: "Alat Musik Khas Sumatra", snack: "Nagasari", notes: [] },
+      { day: "Jumat", activity: "Giant Painting: \"Bayangan Hewan\"", snack: "Bola Ubi", notes: ["Membawa baju ganti cadangan (kegiatan melukis)."] },
+    ],
+    weeklyNotes: [
+      "Membawa botol minum dan tempat makan kosong untuk kudapan setiap hari.",
+      "Memakai masker dan membawa masker cadangan.",
+    ],
+  },
+  {
+    id: "2",
+    name: "Kelas B (Bulan)",
+    teacher: "Bapak Rian",
+    students: 10,
+    currentTema: "Lingkungan Sekitar",
+    currentWeek: "Minggu ke-22",
+    dateRange: "4 – 8 Mei 2026",
+    color: "blue",
+    emoji: "🌙",
+    plans: [
+      { day: "Senin", activity: "Mengenal Tanaman Apotik Hidup", snack: "Bubur Kacang Hijau", notes: [] },
+      { day: "Selasa", activity: "Membuat Kolase dari Daun Kering", snack: "Pisang Rebus", notes: ["Membawa daun kering dari rumah."] },
+      { day: "Rabu", activity: "Menanam Biji Kacang Hijau", snack: "Biskuit", notes: ["Membawa gelas plastik bekas minuman."] },
+      { day: "Kamis", activity: "Membersihkan Taman Sekolah", snack: "Buah Melon", notes: [] },
+      { day: "Jumat", activity: "Senam Pagi Bersama", snack: "Roti Coklat", notes: ["Memakai pakaian olahraga."] },
+    ],
+    weeklyNotes: ["Pastikan kuku anak sudah dipotong pendek."],
+  },
+  {
+    id: "3",
+    name: "Kelas C (Matahari)",
+    teacher: "Ibu Sari",
+    students: 8,
+    currentTema: "Profesi",
+    currentWeek: "Minggu ke-22",
+    dateRange: "4 – 8 Mei 2026",
+    color: "amber",
+    emoji: "☀️",
+    plans: [
+      { day: "Senin", activity: "Bermain Peran: Dokter & Perawat", snack: "Puding Susu", notes: [] },
+      { day: "Selasa", activity: "Bermain Peran: Koki", snack: "Roti Keju", notes: ["Membawa celemek jika punya."] },
+      { day: "Rabu", activity: "Bermain Peran: Pemadam Kebakaran", snack: "Buah Naga", notes: [] },
+      { day: "Kamis", activity: "Mewarnai Gambar Profesi", snack: "Nagasari", notes: [] },
+      { day: "Jumat", activity: "Menyanyi Lagu Cita-citaku", snack: "Bolu Kukus", notes: [] },
+    ],
+    weeklyNotes: ["Bawa buku cerita tentang profesi (jika ada)."],
+  },
+];
 
 export default function SchoolDashboardPage() {
+  const [viewingClass, setViewingClass] = useState<KelasInfo | null>(null);
+
+  // Get current day
+  const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const todayStr = dayNames[new Date().getDay()];
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -72,35 +167,55 @@ export default function SchoolDashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 border-0 bg-white dark:bg-white/[0.04] shadow-[0_1px_3px_rgba(0,0,0,0.06)] rounded-2xl">
-          <CardHeader>
-            <CardTitle className="text-[15px] font-semibold">Agenda Mingguan</CardTitle>
-            <CardDescription className="text-[12px]">
-              Jadwal "Kegiatan Seru" dan "Rencana Kudapan"
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {[
-                { day: "Senin", activity: "Mewarnai Bersama", snack: "Puding Buah" },
-                { day: "Selasa", activity: "Olahraga Pagi & Senam", snack: "Kacang Hijau" },
-                { day: "Rabu", activity: "Mengenal Hewan Liar", snack: "Biskuit & Susu" },
-                { day: "Kamis", activity: "Kerajinan Tangan (Origami)", snack: "Pisang Rebus" },
-                { day: "Jumat", activity: "Praktek Sholat / Doa Bersama", snack: "Roti Manis" },
-              ].map((agenda, i) => (
-                <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-[#f5f5f7] dark:bg-white/[0.03] transition-colors hover:bg-[#ebebed] dark:hover:bg-white/[0.05]">
-                  <div className="w-14 text-center font-semibold text-[12px] text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 py-1.5 rounded-lg shrink-0">
-                    {agenda.day}
+        <div className="col-span-4 flex flex-col space-y-4">
+          <div>
+            <h2 className="text-[15px] font-semibold">Jadwal Minggu Ini</h2>
+            <p className="text-[12px] text-muted-foreground">Jadwal kegiatan per kelas untuk minggu berjalan</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {kelasList.map((kelas) => (
+              <Card key={kelas.id} className="border-0 bg-white dark:bg-white/[0.04] shadow-[0_1px_3px_rgba(0,0,0,0.06)] rounded-2xl cursor-pointer transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 group" onClick={() => setViewingClass(kelas)}>
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-[14px] font-semibold">{kelas.name}</h3>
+                      <p className="text-[12px] text-muted-foreground mt-0.5">{kelas.dateRange}</p>
+                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">🎯 {kelas.currentTema}</span>
+                    </div>
+                    <div className="w-8 h-8 rounded-xl bg-[#f5f5f7] dark:bg-white/[0.06] flex items-center justify-center group-hover:bg-emerald-50 dark:group-hover:bg-emerald-500/10 transition-colors">
+                      <Eye className="w-4 h-4 text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-medium truncate">{agenda.activity}</p>
-                    <p className="text-[11px] text-muted-foreground">Kudapan: {agenda.snack}</p>
+                  <div className="space-y-1.5">
+                    {(() => {
+                      const todayPlanIndex = kelas.plans.findIndex(p => p.day === todayStr);
+                      const startIndex = Math.max(0, todayPlanIndex);
+                      const displayPlans = kelas.plans.slice(startIndex, startIndex + 3);
+                      const remainingCount = kelas.plans.length - startIndex - displayPlans.length;
+
+                      return (
+                        <>
+                          {displayPlans.map((p, i) => {
+                            const isToday = p.day === todayStr;
+                            return (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded w-10 text-center shrink-0 ${isToday ? 'bg-emerald-500 text-white shadow-sm' : 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10'}`}>{p.day.slice(0, 3)}</span>
+                                <span className={`text-[12px] truncate ${isToday ? 'font-semibold text-emerald-800 dark:text-emerald-300' : 'text-muted-foreground'}`}>{p.activity}</span>
+                              </div>
+                            );
+                          })}
+                          {remainingCount > 0 && (
+                            <p className="text-[11px] text-muted-foreground/60 mt-1">+ {remainingCount} hari lainnya…</p>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
         
         <Card className="col-span-3 border-0 bg-white dark:bg-white/[0.04] shadow-[0_1px_3px_rgba(0,0,0,0.06)] rounded-2xl">
           <CardHeader>
@@ -132,6 +247,63 @@ export default function SchoolDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ===== POPUP: Detail Jadwal Minggu Ini ===== */}
+      <Dialog open={!!viewingClass} onOpenChange={(open) => !open && setViewingClass(null)}>
+        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+          {viewingClass && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{viewingClass.currentWeek}</DialogTitle>
+                <DialogDescription>{viewingClass.dateRange} • {viewingClass.name} • Tema: {viewingClass.currentTema}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2 py-2">
+                {viewingClass.plans.map((plan, i) => {
+                  const isToday = plan.day === todayStr;
+                  return (
+                    <div key={i} className={`p-3 rounded-xl transition-colors ${isToday ? 'bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-emerald-200 dark:ring-emerald-500/30 shadow-sm' : 'bg-[#f5f5f7] dark:bg-white/[0.03]'}`}>
+                      <div className="flex items-start gap-3">
+                        <div className={`w-14 text-center font-semibold text-[12px] py-1.5 rounded-lg shrink-0 mt-0.5 ${isToday ? 'bg-emerald-500 text-white shadow-sm' : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400'}`}>{plan.day}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className={`text-[13px] font-medium ${isToday ? 'text-emerald-900 dark:text-emerald-100' : ''}`}>{plan.activity}</p>
+                            {isToday && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/30 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase tracking-wider">Hari Ini</span>}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">🍽 Kudapan: {plan.snack}</p>
+                          {plan.notes.length > 0 && (
+                            <div className="mt-1.5 space-y-0.5">
+                              {plan.notes.map((n, ni) => (
+                                <p key={ni} className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-500/[0.06] px-2 py-1 rounded-md border border-amber-100 dark:border-amber-500/10 flex items-start gap-1"><span className="text-amber-400">•</span>{n}</p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {viewingClass.weeklyNotes.length > 0 && (
+                <div className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-500/[0.04] border border-blue-100 dark:border-blue-500/10">
+                  <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1.5 flex items-center gap-1"><StickyNote className="w-3 h-3" /> Catatan Mingguan</p>
+                  <ul className="space-y-1">
+                    {viewingClass.weeklyNotes.map((note, i) => (
+                      <li key={i} className="flex items-start gap-2 text-[12px] text-blue-900 dark:text-blue-300">
+                        <span className="text-blue-400 mt-0.5">•</span>
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setViewingClass(null)} className="w-full rounded-xl">Tutup</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   )
 }
