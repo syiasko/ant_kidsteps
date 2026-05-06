@@ -25,6 +25,15 @@ const menuItems = [
     icon: CalendarDays,
   },
   {
+    title: "Absensi",
+    url: "#",
+    icon: Users,
+    items: [
+      { title: "Input Absensi", url: "/school/attendance" },
+      { title: "Riwayat Absensi", url: "/school/attendance/history" },
+    ]
+  },
+  {
     title: "Smart Broadcast",
     url: "/school/broadcast",
     icon: Megaphone,
