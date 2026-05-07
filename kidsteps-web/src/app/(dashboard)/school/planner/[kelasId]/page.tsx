@@ -32,6 +32,22 @@ type WeekPlan = {
   weeklyNotes: string[];
 };
 
+type MonthlyEvent = {
+  id: string;
+  date: string;
+  title: string;
+  type: "Holiday" | "Activity" | "Admin";
+};
+
+const monthlyEvents: MonthlyEvent[] = [
+  { id: "1", date: "2026-05-01", title: "Libur Nasional", type: "Holiday" },
+  { id: "2", date: "2026-05-06", title: "Pemeriksaan Gigi Oleh Kidz Dental", type: "Activity" },
+  { id: "3", date: "2026-05-08", title: "Pekan Vaksin Bersama Rumah Vaksin", type: "Activity" },
+  { id: "4", date: "2026-05-10", title: "Kelas Orangtua", type: "Activity" },
+  { id: "5", date: "2026-05-14", title: "Libur Nasional", type: "Holiday" },
+  { id: "6", date: "2026-05-15", title: "Cuti Bersama", type: "Holiday" },
+];
+
 const initialCurrentWeek: WeekPlan = {
   id: "w-now",
   weekLabel: "Minggu ke-22",
@@ -168,6 +184,30 @@ const emptyPlans = (): DailyPlan[] => [
   { day: "Kamis", activity: "", snack: "", notes: [] },
   { day: "Jumat", activity: "", snack: "", notes: [] },
 ];
+
+
+// Helper component to render monthly events for a specific day
+function MonthlyEventDisplay({ index }: { index: number }) {
+  // Simple date mapping for mock demo: currentWeek.dateRange is "4 – 8 Mei 2026"
+  // index 0 (Senin) = 4 Mei, index 1 (Selasa) = 5 Mei, index 2 (Rabu) = 6 Mei, etc.
+  const dayDate = index + 4; 
+  const dateStr = `2026-05-${dayDate.toString().padStart(2, '0')}`;
+  const event = monthlyEvents.find(e => e.date === dateStr);
+  
+  if (!event) return null;
+
+  return (
+    <div className={`mb-3 p-2.5 rounded-xl border flex items-center gap-3 ${event.type === 'Holiday' ? 'bg-red-50/50 border-red-100 dark:bg-red-500/10 dark:border-red-500/20' : 'bg-blue-50/50 border-blue-100 dark:bg-blue-500/10 dark:border-blue-500/20'}`}>
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${event.type === 'Holiday' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+        <CalendarDays className="w-4 h-4" />
+      </div>
+      <div>
+        <p className={`text-[10px] font-bold uppercase tracking-wider ${event.type === 'Holiday' ? 'text-red-500' : 'text-blue-500'}`}>Agenda Bulanan</p>
+        <p className="text-[13px] font-bold">{event.title}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function WeeklyPlannerDetailPage({ params }: { params: Promise<{ kelasId: string }> }) {
   const { kelasId } = use(params);
@@ -330,6 +370,8 @@ export default function WeeklyPlannerDetailPage({ params }: { params: Promise<{ 
                   {isToday && <span className="text-[10px] font-bold bg-white text-emerald-700 dark:bg-black/20 dark:text-white px-1.5 py-0.5 rounded uppercase tracking-wider mt-1.5">Hari Ini</span>}
                 </div>
                 <div className="p-4 flex-1">
+                  <MonthlyEventDisplay index={index} />
+
                   <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
                       <div>
@@ -419,11 +461,11 @@ export default function WeeklyPlannerDetailPage({ params }: { params: Promise<{ 
                       <Pencil className="w-3.5 h-3.5 text-muted-foreground hover:text-blue-600" />
                     </button>
                     <AlertDialog>
-                      <AlertDialogTrigger asChild>
+                      <AlertDialogTrigger render={
                         <button className="w-7 h-7 rounded-lg bg-[#f5f5f7] dark:bg-white/[0.06] flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
                           <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-red-600" />
                         </button>
-                      </AlertDialogTrigger>
+                      } />
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Hapus perencanaan?</AlertDialogTitle>
@@ -645,7 +687,7 @@ export default function WeeklyPlannerDetailPage({ params }: { params: Promise<{ 
               </DialogHeader>
               <div className="space-y-2 py-2">
                 {viewingWeek.plans.map((plan, i) => {
-                  const isToday = plan.day === todayStr;
+                  const isToday = viewingWeek.id === currentWeek.id && plan.day === todayStr;
                   return (
                     <div key={i} className={`p-3 rounded-xl transition-colors ${isToday ? 'bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-emerald-200 dark:ring-emerald-500/30 shadow-sm' : 'bg-[#f5f5f7] dark:bg-white/[0.03]'}`}>
                       <div className="flex items-start gap-3">

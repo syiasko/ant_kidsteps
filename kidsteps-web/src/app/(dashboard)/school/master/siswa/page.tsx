@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Plus, Search, Edit, Trash2, MessageCircle } from "lucide-react";
+import { Plus, Search, Edit, Trash2, MessageCircle, Upload, FileSpreadsheet, Download, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
@@ -49,6 +50,53 @@ export default function DataSiswaPage() {
   
   const [editingSiswa, setEditingSiswa] = useState<Siswa | null>(null);
   const [viewingSiswa, setViewingSiswa] = useState<Siswa | null>(null);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+
+  const downloadTemplate = () => {
+    window.open("/template_siswa_kidsteps.csv", "_blank");
+  };
+
+  const handleCsvImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n');
+      const newStudents: Siswa[] = [];
+      
+      // Skip header (i=0)
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const cols = line.split(',').map(c => c.trim());
+        if (cols.length < 3) continue;
+
+        newStudents.push({
+          id: (data.length + newStudents.length + 1).toString(),
+          nis: cols[0] || "-",
+          name: cols[1] || "Tanpa Nama",
+          class: cols[2] || "Kelas A",
+          address: cols[3] || "-",
+          fatherName: cols[4] || "-",
+          fatherPhone: cols[5] || "",
+          motherName: cols[6] || "-",
+          motherPhone: cols[7] || "",
+          status: "Aktif"
+        });
+      }
+
+      if (newStudents.length > 0) {
+        setData([...data, ...newStudents]);
+        setIsImportDialogOpen(false);
+        // Reset input
+        e.target.value = "";
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const filteredData = data.filter(item => 
     item.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -83,15 +131,72 @@ export default function DataSiswaPage() {
           <p className="text-[13px] text-muted-foreground mt-1">Kelola data murid yang terdaftar di sekolah.</p>
         </div>
         
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger
-            render={
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Tambah Siswa
+        <div className="flex gap-2">
+          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+            <DialogTrigger render={
+              <Button variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                <Upload className="w-4 h-4 mr-2" />
+                Import CSV
               </Button>
-            }
-          />
+            } />
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Bulk Import Siswa</DialogTitle>
+                <DialogDescription>Unggah file .csv untuk memasukkan data siswa dalam jumlah banyak.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="p-4 rounded-xl bg-zinc-50 border border-dashed border-zinc-200 flex flex-col items-center justify-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[13px] font-medium">Pilih file CSV</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Pastikan format kolom sesuai template.</p>
+                  </div>
+                  <input 
+                    type="file" 
+                    accept=".csv" 
+                    onChange={handleCsvImport}
+                    className="hidden" 
+                    id="csv-upload" 
+                  />
+                  <label 
+                    htmlFor="csv-upload" 
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }), 
+                      "h-8 text-[12px] cursor-pointer"
+                    )}
+                  >
+                    Pilih File
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 border border-blue-100">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    <span className="text-[12px] font-medium text-blue-700">Template CSV</span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={downloadTemplate} className="h-7 text-[11px] text-blue-600 hover:text-blue-700 hover:bg-blue-100/50">
+                    <Download className="w-3.5 h-3.5 mr-1.5" />
+                    Download
+                  </Button>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>Batal</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger
+              render={
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Tambah Siswa
+                </Button>
+              }
+            />
           <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleAddSiswa}>
               <DialogHeader>
@@ -151,6 +256,7 @@ export default function DataSiswaPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card className="border-0 bg-white dark:bg-white/[0.04] shadow-[0_1px_3px_rgba(0,0,0,0.06)] rounded-2xl">
@@ -193,15 +299,16 @@ export default function DataSiswaPage() {
                 </TableRow>
               ) : (
                 filteredData.map((siswa) => (
-                  <TableRow key={siswa.id}>
+                  <TableRow 
+                    key={siswa.id} 
+                    onClick={() => setViewingSiswa(siswa)}
+                    className="cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                  >
                     <TableCell className="font-medium">{siswa.nis}</TableCell>
                     <TableCell>
-                      <button 
-                        onClick={() => setViewingSiswa(siswa)}
-                        className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 font-medium hover:underline text-left"
-                      >
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium hover:underline decoration-emerald-600/30 underline-offset-2">
                         {siswa.name}
-                      </button>
+                      </span>
                     </TableCell>
                     <TableCell>{siswa.class}</TableCell>
                     <TableCell className="max-w-[150px] truncate" title={siswa.address}>{siswa.address}</TableCell>
@@ -216,27 +323,33 @@ export default function DataSiswaPage() {
                         {siswa.status}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           className="h-8 w-8 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                          onClick={() => setEditingSiswa(siswa)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingSiswa(siswa);
+                          }}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <AlertDialog>
-                          <AlertDialogTrigger render={
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          } />
-                          <AlertDialogContent>
+                          <AlertDialogTrigger
+                            render={
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
                               <AlertDialogDescription>
@@ -244,8 +357,14 @@ export default function DataSiswaPage() {
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Batal</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteSiswa(siswa.id)} className="bg-red-600 text-white hover:bg-red-700">
+                              <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Batal</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteSiswa(siswa.id);
+                                }} 
+                                className="bg-red-600 text-white hover:bg-red-700"
+                              >
                                 Hapus Permanen
                               </AlertDialogAction>
                             </AlertDialogFooter>

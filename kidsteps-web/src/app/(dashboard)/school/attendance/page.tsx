@@ -80,6 +80,9 @@ export default function AttendancePage() {
   const [isSending, setIsSending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [isBlastDialogOpen, setIsBlastDialogOpen] = useState(false);
+  const [isBlasting, setIsBlasting] = useState(false);
+  const [isBlastSuccess, setIsBlastSuccess] = useState(false);
 
   const today = new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
 
@@ -141,6 +144,29 @@ export default function AttendancePage() {
         setIsSuccess(false);
       }, 1500);
     }, 1000);
+  };
+
+  const handleBlastSend = () => {
+    setIsBlasting(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsBlasting(false);
+      setIsBlastSuccess(true);
+      
+      const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      setAttendanceData(prev => ({
+        ...prev,
+        [selectedClassId]: prev[selectedClassId].map(s => 
+          s.status !== 'Belum Absen' ? { ...s, lastNotified: currentTime } : s
+        )
+      }));
+
+      setTimeout(() => {
+        setIsBlastDialogOpen(false);
+        setIsBlastSuccess(false);
+      }, 1500);
+    }, 2000);
   };
 
   const getStatusBadge = (status: AttendanceStatus) => {
@@ -235,7 +261,10 @@ export default function AttendancePage() {
                )}
              </Button>
              {!isReadOnly && (
-               <Button className="bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white hover:bg-zinc-800 rounded-xl h-9 text-[12px] px-4">
+               <Button 
+                  onClick={() => setIsBlastDialogOpen(true)}
+                  className="bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white hover:bg-zinc-800 rounded-xl h-9 text-[12px] px-4"
+               >
                  <Bell className="w-4 h-4 mr-2" />
                  Blast Notif
                </Button>
@@ -457,6 +486,69 @@ export default function AttendancePage() {
                 <><Check className="w-4 h-4 mr-2" /> Terkirim!</>
               ) : (
                 <><Send className="w-4 h-4 mr-2" /> Kirim Sekarang</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Blast Notification Dialog */}
+      <Dialog open={isBlastDialogOpen} onOpenChange={(open) => !open && !isBlasting && setIsBlastDialogOpen(false)}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-zinc-900 dark:text-white" />
+              Blast Notifikasi Kelas
+            </DialogTitle>
+            <DialogDescription>
+              Kirim notifikasi absensi ke seluruh orang tua murid di <strong>{selectedClass?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6 space-y-6">
+             <div className="grid grid-cols-3 gap-3">
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 text-center">
+                   <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Hadir</p>
+                   <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{currentStudents.filter(s => s.status === 'Hadir').length}</p>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-2xl border border-blue-100 dark:border-blue-500/20 text-center">
+                   <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Izin/Sakit</p>
+                   <p className="text-xl font-bold text-blue-700 dark:text-blue-400">{currentStudents.filter(s => s.status === 'Izin' || s.status === 'Sakit').length}</p>
+                </div>
+                <div className="bg-red-50 dark:bg-red-500/10 p-3 rounded-2xl border border-red-100 dark:border-red-500/20 text-center">
+                   <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1">Alpa</p>
+                   <p className="text-xl font-bold text-red-700 dark:text-red-400">{currentStudents.filter(s => s.status === 'Alpa').length}</p>
+                </div>
+             </div>
+
+             <div className="bg-zinc-50 dark:bg-white/5 rounded-2xl p-4 border border-zinc-200 dark:border-white/10">
+                <p className="text-[13px] text-muted-foreground leading-relaxed">
+                   Setiap orang tua akan menerima pesan spesifik sesuai status absensi putra/putrinya masing-masing. Pastikan data suhu dan jam masuk sudah benar sebelum melakukan blast.
+                </p>
+             </div>
+
+             {currentStudents.filter(s => s.status === 'Belum Absen').length > 0 && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 text-amber-700 dark:text-amber-400">
+                   <Clock className="w-4 h-4 shrink-0" />
+                   <p className="text-[11px] font-medium">
+                      Perhatian: Ada {currentStudents.filter(s => s.status === 'Belum Absen').length} murid yang belum diabsen dan tidak akan menerima notifikasi.
+                   </p>
+                </div>
+             )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" disabled={isBlasting} onClick={() => setIsBlastDialogOpen(false)}>Batal</Button>
+            <Button 
+              onClick={handleBlastSend}
+              disabled={isBlasting || isBlastSuccess || currentStudents.filter(s => s.status !== 'Belum Absen').length === 0}
+              className="bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white hover:bg-zinc-800 min-w-[160px] rounded-xl"
+            >
+              {isBlasting ? (
+                "Mengirim Blast..."
+              ) : isBlastSuccess ? (
+                <><Check className="w-4 h-4 mr-2" /> Blast Terkirim!</>
+              ) : (
+                <><Send className="w-4 h-4 mr-2" /> Kirim Blast Sekarang</>
               )}
             </Button>
           </DialogFooter>

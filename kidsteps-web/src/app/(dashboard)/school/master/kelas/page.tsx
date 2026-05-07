@@ -147,12 +147,12 @@ export default function DataKelasPage() {
           setIsAddDialogOpen(open);
           if (open) setNewKelas({ studentIds: [], homeroomTeacher: "" });
         }}>
-          <DialogTrigger asChild>
+          <DialogTrigger render={
             <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
               Tambah Kelas
             </Button>
-          </DialogTrigger>
+          } />
           <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleAddKelas}>
               <DialogHeader>
@@ -273,7 +273,7 @@ export default function DataKelasPage() {
                           <Edit className="h-4 w-4" />
                         </Button>
                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
+                          <AlertDialogTrigger render={
                             <Button 
                               variant="ghost" 
                               size="icon" 
@@ -281,7 +281,7 @@ export default function DataKelasPage() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                          </AlertDialogTrigger>
+                          } />
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>

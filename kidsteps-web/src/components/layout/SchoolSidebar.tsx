@@ -20,9 +20,13 @@ const menuItems = [
     ]
   },
   {
-    title: "Weekly Planner",
-    url: "/school/planner",
+    title: "Planner",
+    url: "#",
     icon: CalendarDays,
+    items: [
+      { title: "Weekly Planner", url: "/school/planner" },
+      { title: "Monthly Planner", url: "/school/planner/monthly" },
+    ]
   },
   {
     title: "Absensi",
@@ -30,6 +34,7 @@ const menuItems = [
     icon: Users,
     items: [
       { title: "Input Absensi", url: "/school/attendance" },
+      { title: "Daftar Hadir Hari Ini", url: "/school/attendance/today" },
       { title: "Riwayat Absensi", url: "/school/attendance/history" },
     ]
   },
