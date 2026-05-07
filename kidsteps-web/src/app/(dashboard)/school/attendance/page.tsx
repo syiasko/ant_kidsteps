@@ -260,7 +260,7 @@ export default function AttendancePage() {
                  <><CheckCircle2 className="w-4 h-4 mr-2" /> Simpan Absensi</>
                )}
              </Button>
-             {!isReadOnly && (
+             {isReadOnly && (
                <Button 
                   onClick={() => setIsBlastDialogOpen(true)}
                   className="bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white hover:bg-zinc-800 rounded-xl h-9 text-[12px] px-4"
@@ -279,7 +279,7 @@ export default function AttendancePage() {
                 <th className="px-5 py-4 font-semibold">Murid</th>
                 <th className="px-5 py-4 font-semibold">Status Kehadiran</th>
                 <th className="px-5 py-4 font-semibold">Detail</th>
-                <th className="px-5 py-4 font-semibold text-right">Aksi Notifikasi</th>
+                {isReadOnly && <th className="px-5 py-4 font-semibold text-right">Aksi Notifikasi</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-black/[0.04] dark:divide-white/[0.06]">
@@ -390,11 +390,12 @@ export default function AttendancePage() {
                       )}
                     </div>
                   </td>
+                  {isReadOnly && (
                   <td className="px-5 py-4 text-right">
                     <div className="flex flex-col items-end gap-1.5">
                        <Button 
                         size="sm" 
-                        disabled={student.status === 'Belum Absen' || isReadOnly}
+                        disabled={student.status === 'Belum Absen'}
                         onClick={() => handleSendNotification(student)}
                         className={`rounded-xl h-8 text-[12px] px-3 shadow-sm ${student.lastNotified ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20' : 'bg-emerald-600 hover:bg-emerald-700 text-white'} disabled:opacity-50`}
                       >
@@ -409,6 +410,7 @@ export default function AttendancePage() {
                       )}
                     </div>
                   </td>
+                  )}
                 </tr>
               ))}
             </tbody>
